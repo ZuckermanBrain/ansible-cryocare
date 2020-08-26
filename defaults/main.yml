@@ -1,2 +1,6 @@
 ---
 # defaults file for app-cryocare
+
+cryocare_clone_repo: https://github.com/ZuckermanBrain/cryoCARE_T2T.git
+cryocare_version: 03d74cc52df522a18978da3eb598ca7443cb615b
+motioncor_url: ''

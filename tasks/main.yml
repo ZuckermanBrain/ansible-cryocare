@@ -1,2 +1,71 @@
 ---
 # tasks file for app-cryocare
+
+- name: Install Singularity pre-reqs
+  yum:
+    name: "{{ item }}"
+    state: present
+  become: yes
+  loop:
+    - "@^development"
+    - openssl-devel
+    - libuuid-devel
+    - libseccomp-devel
+    - wget
+    - squashfs-tools
+    - golang
+
+- name: Install Singularity
+  yum:
+    name: "{{ item }}"
+    state: present
+  become: yes
+  loop:
+    - epel-release
+    - singularity-runtime 
+    - singularity
+
+- name: Ensure that git is installed.
+  package:
+    name: git
+    state: present
+  become: yes
+
+- name: Clone down the CryoCARE git repo
+  git:
+    repo: "{{ cryocare_clone_repo }}"
+    dest: /opt/cryocare
+    version: "{{ cryocare_version }}"
+  become: yes
+
+- name: Build the CryoCARE Singularity image
+  shell: |
+    cd /opt/cryocare
+    singularity build cryoCARE_v0.1.1.simg cryoCARE.Singularity
+  become: yes
+
+- name: Download MotionCor2
+  get_url:
+    url: "{{ motioncor_url }}
+    dest: /tmp/MotionCor2_1.3.1.zip
+  become: yes
+
+- name: Unzip MotionCor2
+  unarchive:
+    src: /tmp/MotionCor2_1.3.1.zip
+    remote_src: yes
+    dest: /opt/cryocare/example
+  become: yes
+
+- name: Make symlink for MotionCor2
+  file:
+    state: link
+    path: /opt/cryocare/example/MotionCor2_1.3.0-Cuda101
+    src: /opt/cryocare/example/MotionCor2_v1.3.1-Cuda101
+  become: yes
+
+- name: Add in bash function wrapper for CryoCARE
+  copy:
+    src: cryocare.sh
+    dest: /etc/profile.d/cryocare.sh 
+  become: yes
