@@ -1,5 +1,15 @@
 ---
 # tasks file for app-cryocare
+- name: Check if the Singularity image has been built
+  stat:
+    path: /opt/cryocare/cryoCARE_v0.1.1.simg
+  register: singularity_image_check
+
+- name: Check if MotionCor has been downloaded
+  stat:
+    path: "/opt/cryocare/example/MotionCor2_v1.3.1-Cuda101"
+  register: motioncor_check
+
 
 - name: Install Singularity pre-reqs
   yum:
@@ -7,7 +17,7 @@
     state: present
   become: yes
   loop:
-    - "@^development"
+    - "@Development Tools"
     - openssl-devel
     - libuuid-devel
     - libseccomp-devel
@@ -43,12 +53,14 @@
     cd /opt/cryocare
     singularity build cryoCARE_v0.1.1.simg cryoCARE.Singularity
   become: yes
+  when: not singularity_image_check.stat.exists
 
 - name: Download MotionCor2
   get_url:
-    url: "{{ motioncor_url }}
+    url: "{{ motioncor_url }}"
     dest: /tmp/MotionCor2_1.3.1.zip
   become: yes
+  when: not motioncor_check.stat.exists
 
 - name: Unzip MotionCor2
   unarchive:
@@ -56,6 +68,7 @@
     remote_src: yes
     dest: /opt/cryocare/example
   become: yes
+  when: not motioncor_check.stat.exists
 
 - name: Make symlink for MotionCor2
   file:
